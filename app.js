@@ -7,7 +7,7 @@
     'use strict';
 
     // Configuration - REPLACE THESE VALUES
-    var CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
+    var CLIENT_ID = '91a42276f0d844c59cfe7c2daf0c5360';
     var REDIRECT_URI = window.location.origin + window.location.pathname;
     var SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 
