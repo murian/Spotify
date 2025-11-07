@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Spotify Player - iOS 9</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen">
+            <div class="login-container">
+                <h1>Spotify Player</h1>
+                <p>Control your Spotify playback</p>
+                <button id="login-btn" class="btn-primary">Login with Spotify</button>
+            </div>
+        </div>
+
+        <!-- Player Screen -->
+        <div id="player-screen" class="screen" style="display: none;">
+            <div class="player-container">
+                <!-- Album Art Section -->
+                <div class="album-art-section">
+                    <div id="album-art-container">
+                        <img id="album-art" src="" alt="Album Art">
+                        <div id="no-playback" class="no-playback">
+                            <p>No music playing</p>
+                            <p class="subtitle">Start playing on Spotify</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls Section -->
+                <div class="controls-section">
+                    <div class="track-info">
+                        <h2 id="track-name">-</h2>
+                        <p id="artist-name">-</p>
+                        <p id="album-name">-</p>
+                    </div>
+
+                    <div class="progress-container">
+                        <span id="current-time">0:00</span>
+                        <div class="progress-bar">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        <span id="total-time">0:00</span>
+                    </div>
+
+                    <div class="controls">
+                        <button id="prev-btn" class="control-btn">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                                <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                            </svg>
+                        </button>
+                        <button id="play-pause-btn" class="control-btn control-btn-main">
+                            <svg id="play-icon" width="50" height="50" viewBox="0 0 24 24" fill="white">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <svg id="pause-icon" width="50" height="50" viewBox="0 0 24 24" fill="white" style="display: none;">
+                                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                            </svg>
+                        </button>
+                        <button id="next-btn" class="control-btn">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                                <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="status">
+                        <span id="status-message"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
