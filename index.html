@@ -10,12 +10,14 @@
 </head>
 <body>
     <div id="app">
-        <!-- Login Screen -->
-        <div id="login-screen" class="screen">
+        <!-- Connection Screen -->
+        <div id="connection-screen" class="screen">
             <div class="login-container">
                 <h1>Spotify Player</h1>
-                <p>Control your Spotify playback</p>
-                <button id="login-btn" class="btn-primary">Login with Spotify</button>
+                <p>Connect to your Mac</p>
+                <input type="text" id="server-url" class="server-input" placeholder="http://192.168.1.x:3000">
+                <button id="connect-btn" class="btn-primary">Connect</button>
+                <p class="hint">Enter the server address shown on your Mac</p>
             </div>
         </div>
 

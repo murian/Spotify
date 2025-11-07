@@ -1,0 +1,17 @@
+{
+  "name": "spotify-player-local",
+  "version": "1.0.0",
+  "description": "Local Spotify player for iPad - displays what's playing on your Mac",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["spotify", "remote", "player", "macos"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^2.6.7"
+  }
+}

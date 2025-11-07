@@ -1,170 +1,276 @@
-# Spotify Player for iOS 9
+# Spotify Player for iOS 9 (Local Version)
 
-A web-based Spotify player optimized for old iPads running iOS 9. Control your Spotify playback with a beautiful landscape interface showing album art, track info, and playback controls.
+A web-based Spotify player optimized for old iPads running iOS 9. This displays what's currently playing on **your Mac's Spotify** and lets you control it remotely - just like macOS's Now Playing widget.
 
 ## Features
 
-- 🎵 Display currently playing track
+- 🎵 Display currently playing track from your Mac
 - 🎨 Show album artwork
 - ⏯️ Play/Pause control
 - ⏭️ Skip to next track
 - ⏮️ Skip to previous track
 - 📱 Optimized for landscape mode on iPad
-- 🔄 Real-time playback updates
+- 🔄 Real-time updates (1-second polling)
 - ✨ iOS 9 Safari compatible (ES5 JavaScript)
+- 🔒 No Spotify API keys needed - works locally
+- 🏠 Works on your local network (no internet required)
+
+## How It Works
+
+1. A lightweight Node.js server runs on your Mac
+2. The server uses AppleScript to read/control Spotify on your Mac
+3. Your iPad connects to this local server over your home WiFi
+4. The iPad displays what's playing and sends control commands
+
+**This is different from the Spotify Web API version** - it shows what's playing specifically on your computer, not your Spotify account in general.
 
 ## Requirements
 
-- Spotify Premium account (required for playback control API)
-- Spotify app running on any device (phone, computer, etc.)
-- iPad with iOS 9+ or any modern web browser
-- Web server to host the files (can be local or online)
+- Mac with Spotify installed
+- Node.js installed on your Mac (v12 or later)
+- iPad with iOS 9+ or any web browser
+- Both devices on the same WiFi network
 
 ## Setup Instructions
 
-### 1. Create a Spotify App
+### 1. Install Node.js (if not already installed)
 
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Log in with your Spotify account
-3. Click "Create an App"
-4. Fill in the app details:
-   - App name: "Spotify Player iOS9" (or any name)
-   - App description: "Web player for iPad"
-5. Accept the terms and create the app
-6. Note your **Client ID**
+Download and install from [nodejs.org](https://nodejs.org/)
 
-### 2. Configure Redirect URI
-
-1. In your Spotify app settings, click "Edit Settings"
-2. Add your Redirect URI:
-   - For local testing: `http://localhost:8000/index.html` or `http://localhost:8000/`
-   - For hosted version: `https://yourdomain.com/index.html` or `https://yourdomain.com/`
-3. Click "Add" then "Save"
-
-### 3. Update the Code
-
-1. Open `app.js` in a text editor
-2. Replace `YOUR_SPOTIFY_CLIENT_ID` with your actual Client ID:
-   ```javascript
-   var CLIENT_ID = 'your_actual_client_id_here';
-   ```
-3. If needed, update the `REDIRECT_URI` to match your hosting setup:
-   ```javascript
-   var REDIRECT_URI = 'http://localhost:8000/';
-   ```
-
-### 4. Host the Application
-
-#### Option A: Local Server (for testing)
-
-Using Python 3:
+Or use Homebrew:
 ```bash
-python3 -m http.server 8000
+brew install node
 ```
 
-Using Python 2:
+Verify installation:
 ```bash
-python -m SimpleHTTPServer 8000
+node --version
+npm --version
 ```
 
-Using Node.js (with npx):
+### 2. Install and Start the Server
+
+Open Terminal on your Mac and navigate to this folder:
+
 ```bash
-npx http-server -p 8000
+cd /path/to/Spotify
 ```
 
-Then open: `http://localhost:8000/` (or `http://YOUR_COMPUTER_IP:8000/` from iPad)
+Install dependencies:
+```bash
+npm install
+```
 
-#### Option B: GitHub Pages (free hosting)
+Start the server:
+```bash
+npm start
+```
 
-1. Create a GitHub repository
-2. Upload `index.html`, `style.css`, and `app.js`
-3. Go to Settings > Pages
-4. Enable GitHub Pages from main branch
-5. Use the provided URL as your Redirect URI in Spotify settings
+You should see output like:
+```
+🎵 Spotify Local Server
+========================
+Server running on port 3000
 
-#### Option C: Any Web Host
+Access from your iPad:
+  http://192.168.1.123:3000
 
-Upload the three files to any web hosting service (Netlify, Vercel, your own server, etc.)
+Local access:
+  http://localhost:3000
 
-### 5. Use the App
+Press Ctrl+C to stop
+```
 
-1. Open the hosted URL in Safari on your iPad
-2. Click "Login with Spotify"
-3. Authorize the app
-4. Start playing music on Spotify (on any device)
-5. The player will show what's currently playing and let you control it
+**Keep this Terminal window open** - the server needs to stay running.
 
-## Usage Notes
+### 3. Connect from iPad
 
-### Important
+1. Make sure Spotify is playing something on your Mac
+2. On your iPad, open Safari
+3. Go to the URL shown in the Terminal (e.g., `http://192.168.1.123:3000`)
+4. You should see a connection screen
+5. The server URL should already be filled in
+6. Tap "Connect"
+7. You should now see what's playing!
 
-- You need an **active Spotify playback** on any device (phone, computer, smart speaker, etc.)
-- The app controls your Spotify playback, it doesn't play audio directly
-- Requires Spotify Premium for API playback control
+### 4. Optional: Add to Home Screen
 
-### Tips
+For a full-screen app experience:
+1. In Safari, tap the Share button
+2. Tap "Add to Home Screen"
+3. Name it "Spotify Player"
+4. Launch from home screen anytime
 
-- Rotate iPad to landscape mode for best experience
-- Add to home screen for full-screen app experience:
-  1. Tap Share button in Safari
-  2. Tap "Add to Home Screen"
-  3. Launch from home screen for app-like experience
-- The player updates every 2 seconds automatically
-- If controls aren't working, make sure you have an active Spotify session
+## Usage
 
-### Troubleshooting
+### Starting the Server
 
-**"No active device found"**
-- Start playing music on Spotify (on any device) first
-- The app controls existing playback, it doesn't initiate it
+Every time you want to use this:
+1. Open Terminal on your Mac
+2. Navigate to this folder: `cd /path/to/Spotify`
+3. Run: `npm start`
+4. Keep Terminal open while using
 
-**Login doesn't work**
-- Check that CLIENT_ID is correct in `app.js`
-- Verify Redirect URI matches exactly in Spotify Dashboard and `app.js`
-- Clear browser cache and try again
+### Using the Player
 
-**Album art not showing**
-- Some tracks may not have album art
-- Check internet connection
+- Start playing music in Spotify on your Mac
+- The iPad will automatically show what's playing
+- Use the controls to play/pause, skip tracks
+- Progress bar updates in real-time
+- Album art displays automatically
 
-**Player not updating**
-- Refresh the page
-- Check if Spotify is actually playing
-- Token may have expired - logout and login again
+### Stopping the Server
 
-## Browser Compatibility
+Press `Ctrl+C` in the Terminal window to stop the server.
 
-- iOS 9+ Safari (primary target)
-- All modern browsers (Chrome, Firefox, Edge, Safari)
-- Uses ES5 JavaScript for maximum compatibility
+## Troubleshooting
+
+### "Cannot connect to server"
+
+- Make sure the server is running on your Mac (check Terminal)
+- Verify both devices are on the same WiFi network
+- Try accessing `http://localhost:3000` on your Mac's browser to test the server
+- Check your Mac's firewall settings (allow Node.js connections)
+
+### "No music playing" message
+
+- Start playing something in Spotify on your Mac first
+- Make sure Spotify is actually running on your Mac
+- Try pausing and playing again
+
+### Controls don't work
+
+- Spotify must be running on your Mac
+- Check Terminal for error messages
+- Try restarting the Spotify app on your Mac
+
+### Album art not showing
+
+- Some tracks may not have album artwork
+- Check internet connection (album art comes from Spotify's servers)
+
+### Server won't start
+
+- Make sure port 3000 is not already in use
+- Try changing the port in `server.js` (line 9):
+  ```javascript
+  const PORT = 3001; // or any other port
+  ```
+
+### Permission errors with AppleScript
+
+On first use, macOS may ask for permission for Terminal/Node to control Spotify. Click "OK" to allow this.
 
 ## Technical Details
 
-- Pure HTML/CSS/JavaScript (no frameworks)
-- ES5 syntax for iOS 9 compatibility
-- Spotify Web API for playback control
-- OAuth 2.0 Implicit Grant Flow for authentication
-- Polling-based updates (2-second intervals)
+### Architecture
 
-## API Scopes Used
+- **Server**: Node.js with Express
+- **Spotify Control**: AppleScript (macOS native automation)
+- **Client**: Pure HTML/CSS/JavaScript (ES5 for iOS 9)
+- **Communication**: REST API over local network
+- **Update frequency**: 1 second polling
 
-- `user-read-playback-state` - Read current playback state
-- `user-modify-playback-state` - Control playback
-- `user-read-currently-playing` - Read currently playing track
+### Files
 
-## Files
-
-- `index.html` - Main HTML structure
+- `server.js` - Node.js server with AppleScript integration
+- `package.json` - Node.js dependencies
+- `index.html` - Web interface structure
 - `style.css` - Styling and layout (landscape optimized)
-- `app.js` - Application logic and Spotify API integration
+- `app.js` - Client-side logic (ES5 compatible)
 - `README.md` - This file
+
+### API Endpoints
+
+The server provides these endpoints:
+
+- `GET /api/status` - Get current playback state
+- `POST /api/control` - Control playback (play, pause, next, previous)
+- `GET /api/info` - Server information
+
+### Supported Actions
+
+- `playpause` - Toggle play/pause
+- `play` - Resume playback
+- `pause` - Pause playback
+- `next` - Skip to next track
+- `previous` - Skip to previous track
+
+## Advanced Usage
+
+### Running on Different Port
+
+Edit `server.js` line 9:
+```javascript
+const PORT = 3001; // Change to any available port
+```
+
+### Auto-start on Mac Boot (Optional)
+
+You can create a Launch Agent to auto-start the server:
+
+1. Create file: `~/Library/LaunchAgents/com.spotify.player.plist`
+2. Add configuration (adjust paths):
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.spotify.player</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/node</string>
+        <string>/path/to/Spotify/server.js</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+```
+3. Load it: `launchctl load ~/Library/LaunchAgents/com.spotify.player.plist`
+
+### Keeping Server Running
+
+Use a tool like `pm2` to keep the server running:
+```bash
+npm install -g pm2
+pm2 start server.js --name spotify-player
+pm2 save
+pm2 startup
+```
 
 ## Limitations
 
-- Requires active Spotify Premium subscription
-- Cannot control volume (API limitation on some devices)
-- Cannot seek within track (can be added if needed)
-- Tokens expire after 1 hour (requires re-login)
+- Only works with Spotify on macOS (uses AppleScript)
+- Requires Mac and iPad on same network
+- Cannot control volume through this interface
+- Seek/scrubbing not implemented (can be added if needed)
+- Server must be running on Mac for iPad to work
+
+## Compatibility
+
+### Server (Mac)
+- macOS 10.9+
+- Node.js 12+
+- Spotify desktop app
+
+### Client (iPad)
+- iOS 9+ Safari (primary target)
+- Any modern browser on any device
+
+## Windows/Linux Support
+
+This version uses AppleScript and only works on macOS. For Windows/Linux, you would need to:
+- Replace AppleScript with platform-specific Spotify control
+- Windows: Use PowerShell or C# to control Spotify
+- Linux: Use D-Bus to communicate with Spotify
+
+## Security Note
+
+The server runs without authentication since it's intended for local network use only. **Do not expose this to the internet** without adding proper authentication.
 
 ## License
 
@@ -173,3 +279,5 @@ Free to use and modify for personal use.
 ## Credits
 
 Built for iOS 9 compatibility with ❤️
+
+Uses AppleScript for native macOS Spotify integration.
