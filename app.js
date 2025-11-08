@@ -184,9 +184,13 @@
         makeRequest('GET', '/api/news', null, function(response) {
             if (response && response.news && response.news.length > 0) {
                 // Create scrolling text with bullet separators
-                // Repeat the text 3 times for continuous scrolling
+                // Repeat the text 10 times for seamless continuous scrolling
                 var newsText = response.news.join(' • ') + ' • ';
-                newsTickerText.textContent = newsText + newsText + newsText;
+                var repeatedText = '';
+                for (var i = 0; i < 10; i++) {
+                    repeatedText += newsText;
+                }
+                newsTickerText.textContent = repeatedText;
                 console.log('News loaded:', response.news.length, 'headlines');
             } else {
                 console.log('No news received');
@@ -278,6 +282,7 @@
 
         // Update news every 5 minutes
         setInterval(function() {
+            console.log('Auto-refreshing news (5 minute interval)');
             fetchNews();
         }, 5 * 60 * 1000);
     }
