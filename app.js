@@ -270,27 +270,61 @@
 
     // Initialization
     function init() {
-        // Check for stored server URL
-        var storedUrl = localStorage.getItem('spotify_server_url');
-        if (storedUrl) {
-            serverUrlInput.value = storedUrl;
+        // Auto-detect server URL from browser address
+        var currentUrl = window.location.protocol + '//' + window.location.host;
 
-            // Try to auto-connect
-            testConnection(storedUrl, function(success) {
+        // If we're accessing via IP/domain (not file://), use current URL
+        if (window.location.protocol !== 'file:') {
+            serverUrlInput.value = currentUrl;
+
+            // Try to auto-connect immediately
+            testConnection(currentUrl, function(success) {
                 if (success) {
-                    serverUrl = storedUrl;
+                    serverUrl = currentUrl;
+                    localStorage.setItem('spotify_server_url', serverUrl);
                     initPlayer();
                 } else {
-                    // Server not available, show connection screen
-                    connectionScreen.style.display = 'flex';
-                    playerScreen.style.display = 'none';
-                    showStatus('Server not available. Please reconnect.', 5000);
+                    // Try stored URL as fallback
+                    var storedUrl = localStorage.getItem('spotify_server_url');
+                    if (storedUrl && storedUrl !== currentUrl) {
+                        serverUrlInput.value = storedUrl;
+                        testConnection(storedUrl, function(success) {
+                            if (success) {
+                                serverUrl = storedUrl;
+                                initPlayer();
+                            } else {
+                                connectionScreen.style.display = 'flex';
+                                playerScreen.style.display = 'none';
+                            }
+                        });
+                    } else {
+                        connectionScreen.style.display = 'flex';
+                        playerScreen.style.display = 'none';
+                    }
                 }
             });
         } else {
-            // Show connection screen
-            connectionScreen.style.display = 'flex';
-            playerScreen.style.display = 'none';
+            // File protocol - check for stored server URL
+            var storedUrl = localStorage.getItem('spotify_server_url');
+            if (storedUrl) {
+                serverUrlInput.value = storedUrl;
+
+                // Try to auto-connect
+                testConnection(storedUrl, function(success) {
+                    if (success) {
+                        serverUrl = storedUrl;
+                        initPlayer();
+                    } else {
+                        connectionScreen.style.display = 'flex';
+                        playerScreen.style.display = 'none';
+                        showStatus('Server not available. Please reconnect.', 5000);
+                    }
+                });
+            } else {
+                // Show connection screen
+                connectionScreen.style.display = 'flex';
+                playerScreen.style.display = 'none';
+            }
         }
     }
 
