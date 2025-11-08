@@ -32,6 +32,7 @@
     var nextBtn = document.getElementById('next-btn');
     var statusMessage = document.getElementById('status-message');
     var newsTickerText = document.getElementById('news-ticker-text');
+    var newsTickerTextCopy = document.getElementById('news-ticker-text-copy');
 
     // Utility Functions
     function formatTime(ms) {
@@ -184,13 +185,10 @@
         makeRequest('GET', '/api/news', null, function(response) {
             if (response && response.news && response.news.length > 0) {
                 // Create scrolling text with bullet separators
-                // Repeat the text 10 times for seamless continuous scrolling
                 var newsText = response.news.join(' • ') + ' • ';
-                var repeatedText = '';
-                for (var i = 0; i < 10; i++) {
-                    repeatedText += newsText;
-                }
-                newsTickerText.textContent = repeatedText;
+                // Set the same text on both elements for seamless loop
+                newsTickerText.textContent = newsText;
+                newsTickerTextCopy.textContent = newsText;
                 console.log('News loaded:', response.news.length, 'headlines');
             } else {
                 console.log('No news received');
@@ -198,6 +196,7 @@
         }, function(error) {
             console.error('Error fetching news:', error);
             newsTickerText.textContent = 'Nieuws kan niet worden geladen • ';
+            newsTickerTextCopy.textContent = 'Nieuws kan niet worden geladen • ';
         });
     }
 

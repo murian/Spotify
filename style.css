@@ -363,14 +363,18 @@ body {
     align-items: center;
 }
 
+.news-ticker-scroll {
+    display: flex;
+    animation: scroll-left 20s linear infinite;
+    -webkit-animation: scroll-left 20s linear infinite;
+}
+
 .news-ticker-text {
     display: inline-block;
     white-space: nowrap;
-    padding-left: 100%;
+    padding-right: 50px;
     font-size: 16px;
     color: white;
-    animation: scroll-left 20s linear infinite;
-    -webkit-animation: scroll-left 20s linear infinite;
 }
 
 @keyframes scroll-left {
@@ -379,8 +383,8 @@ body {
         -webkit-transform: translateX(0);
     }
     100% {
-        transform: translateX(-100%);
-        -webkit-transform: translateX(-100%);
+        transform: translateX(-50%);
+        -webkit-transform: translateX(-50%);
     }
 }
 
@@ -389,6 +393,6 @@ body {
         -webkit-transform: translateX(0);
     }
     100% {
-        -webkit-transform: translateX(-100%);
+        -webkit-transform: translateX(-50%);
     }
 }
