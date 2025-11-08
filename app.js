@@ -1,25 +1,22 @@
 /**
- * Spotify Player for iOS 9
+ * Spotify Player for iOS 9 - Local Server Version
  * ES5 Compatible - No modern JavaScript features
+ * Connects to local server running on your Mac
  */
 
 (function() {
     'use strict';
 
-    // Configuration - REPLACE THESE VALUES
-    var CLIENT_ID = '91a42276f0d844c59cfe7c2daf0c5360';
-    var REDIRECT_URI = https://murian.github.io/Spotify/;
-    var SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
-
     // State
-    var accessToken = null;
+    var serverUrl = null;
     var refreshTimer = null;
     var currentTrack = null;
 
     // DOM Elements
-    var loginScreen = document.getElementById('login-screen');
+    var connectionScreen = document.getElementById('connection-screen');
     var playerScreen = document.getElementById('player-screen');
-    var loginBtn = document.getElementById('login-btn');
+    var serverUrlInput = document.getElementById('server-url');
+    var connectBtn = document.getElementById('connect-btn');
     var albumArt = document.getElementById('album-art');
     var noPlayback = document.getElementById('no-playback');
     var trackName = document.getElementById('track-name');
@@ -36,17 +33,6 @@
     var statusMessage = document.getElementById('status-message');
 
     // Utility Functions
-    function getHashParams() {
-        var hashParams = {};
-        var e;
-        var r = /([^&;=]+)=?([^&;]*)/g;
-        var q = window.location.hash.substring(1);
-        while ((e = r.exec(q))) {
-            hashParams[e[1]] = decodeURIComponent(e[2]);
-        }
-        return hashParams;
-    }
-
     function formatTime(ms) {
         var seconds = Math.floor(ms / 1000);
         var minutes = Math.floor(seconds / 60);
@@ -62,10 +48,11 @@
     }
 
     // API Functions
-    function makeRequest(method, url, callback, errorCallback) {
+    function makeRequest(method, endpoint, data, callback, errorCallback) {
         var xhr = new XMLHttpRequest();
+        var url = serverUrl + endpoint;
+
         xhr.open(method, url, true);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
         xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onload = function() {
@@ -74,7 +61,9 @@
                     var response = xhr.responseText ? JSON.parse(xhr.responseText) : null;
                     callback(response);
                 } catch (e) {
-                    callback(null);
+                    if (errorCallback) {
+                        errorCallback('Parse error', xhr.responseText);
+                    }
                 }
             } else {
                 if (errorCallback) {
@@ -85,29 +74,30 @@
 
         xhr.onerror = function() {
             if (errorCallback) {
-                errorCallback(0, 'Network error');
+                errorCallback('Network error', null);
             }
         };
 
-        xhr.send();
+        if (data) {
+            xhr.send(JSON.stringify(data));
+        } else {
+            xhr.send();
+        }
     }
 
     function getCurrentPlayback() {
-        makeRequest('GET', 'https://api.spotify.com/v1/me/player', function(data) {
-            if (data && data.item) {
+        makeRequest('GET', '/api/status', null, function(data) {
+            if (data && data.running && data.track) {
                 updatePlayer(data);
                 currentTrack = data;
             } else {
                 showNoPlayback();
+                currentTrack = null;
             }
-        }, function(status) {
-            if (status === 401) {
-                // Token expired
-                logout();
-            } else if (status === 204) {
-                // No playback
-                showNoPlayback();
-            }
+        }, function(error) {
+            console.error('Error getting playback:', error);
+            showNoPlayback();
+            currentTrack = null;
         });
     }
 
@@ -115,31 +105,29 @@
         noPlayback.style.display = 'none';
 
         // Update track info
-        trackName.textContent = data.item.name;
-
-        // Artists
-        var artists = [];
-        for (var i = 0; i < data.item.artists.length; i++) {
-            artists.push(data.item.artists[i].name);
-        }
-        artistName.textContent = artists.join(', ');
-
-        albumName.textContent = data.item.album.name;
+        trackName.textContent = data.track.name || '-';
+        artistName.textContent = data.track.artist || '-';
+        albumName.textContent = data.track.album || '-';
 
         // Album art
-        if (data.item.album.images && data.item.album.images.length > 0) {
-            albumArt.src = data.item.album.images[0].url;
+        if (data.track.albumArt) {
+            albumArt.src = data.track.albumArt;
             albumArt.style.display = 'block';
+        } else {
+            albumArt.style.display = 'none';
         }
 
         // Progress
-        var progress = (data.progress_ms / data.item.duration_ms) * 100;
+        var duration = data.track.duration || 0;
+        var position = data.track.position || 0;
+        var progress = duration > 0 ? (position / duration) * 100 : 0;
+
         progressFill.style.width = progress + '%';
-        currentTime.textContent = formatTime(data.progress_ms);
-        totalTime.textContent = formatTime(data.item.duration_ms);
+        currentTime.textContent = formatTime(position);
+        totalTime.textContent = formatTime(duration);
 
         // Play/Pause state
-        if (data.is_playing) {
+        if (data.isPlaying) {
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
         } else {
@@ -157,140 +145,170 @@
         currentTime.textContent = '0:00';
         totalTime.textContent = '0:00';
         progressFill.style.width = '0%';
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+    }
+
+    function controlPlayback(action) {
+        makeRequest('POST', '/api/control', { action: action }, function(response) {
+            if (response && response.success) {
+                setTimeout(getCurrentPlayback, 300);
+            } else {
+                showStatus('Control failed');
+            }
+        }, function(error) {
+            showStatus('Control error');
+            console.error('Control error:', error);
+        });
     }
 
     function playPause() {
-        if (!currentTrack) {
-            showStatus('No playback available');
-            return;
-        }
-
-        var endpoint = currentTrack.is_playing ?
-            'https://api.spotify.com/v1/me/player/pause' :
-            'https://api.spotify.com/v1/me/player/play';
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', endpoint, true);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-
-        xhr.onload = function() {
-            if (xhr.status === 204) {
-                setTimeout(getCurrentPlayback, 300);
-            } else if (xhr.status === 404) {
-                showStatus('No active device found');
-            } else {
-                showStatus('Playback error');
-            }
-        };
-
-        xhr.send();
+        controlPlayback('playpause');
     }
 
     function skipToNext() {
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://api.spotify.com/v1/me/player/next', true);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-
-        xhr.onload = function() {
-            if (xhr.status === 204) {
-                showStatus('Skipped to next');
-                setTimeout(getCurrentPlayback, 500);
-            } else if (xhr.status === 404) {
-                showStatus('No active device found');
-            } else {
-                showStatus('Skip error');
-            }
-        };
-
-        xhr.send();
+        controlPlayback('next');
+        showStatus('Next track');
     }
 
     function skipToPrevious() {
+        controlPlayback('previous');
+        showStatus('Previous track');
+    }
+
+    // Connection
+    function testConnection(url, callback) {
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://api.spotify.com/v1/me/player/previous', true);
-        xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        xhr.open('GET', url + '/api/info', true);
+        xhr.timeout = 5000;
 
         xhr.onload = function() {
-            if (xhr.status === 204) {
-                showStatus('Skipped to previous');
-                setTimeout(getCurrentPlayback, 500);
-            } else if (xhr.status === 404) {
-                showStatus('No active device found');
+            if (xhr.status === 200) {
+                callback(true);
             } else {
-                showStatus('Skip error');
+                callback(false);
             }
+        };
+
+        xhr.onerror = function() {
+            callback(false);
+        };
+
+        xhr.ontimeout = function() {
+            callback(false);
         };
 
         xhr.send();
     }
 
-    // Authentication
-    function login() {
-        var authUrl = 'https://accounts.spotify.com/authorize';
-        authUrl += '?client_id=' + encodeURIComponent(CLIENT_ID);
-        authUrl += '&response_type=token';
-        authUrl += '&redirect_uri=' + encodeURIComponent(REDIRECT_URI);
-        authUrl += '&scope=' + encodeURIComponent(SCOPES);
-        authUrl += '&show_dialog=true';
+    function connect() {
+        var url = serverUrlInput.value.trim();
 
-        window.location = authUrl;
+        // Remove trailing slash if present
+        if (url.charAt(url.length - 1) === '/') {
+            url = url.substring(0, url.length - 1);
+        }
+
+        // Basic validation
+        if (!url || url.indexOf('http') !== 0) {
+            showStatus('Please enter a valid URL');
+            return;
+        }
+
+        connectBtn.textContent = 'Connecting...';
+        connectBtn.disabled = true;
+
+        testConnection(url, function(success) {
+            connectBtn.textContent = 'Connect';
+            connectBtn.disabled = false;
+
+            if (success) {
+                serverUrl = url;
+                localStorage.setItem('spotify_server_url', serverUrl);
+                initPlayer();
+            } else {
+                showStatus('Cannot connect to server. Check the URL and try again.', 5000);
+            }
+        });
     }
 
-    function logout() {
-        accessToken = null;
-        localStorage.removeItem('spotify_access_token');
+    function disconnect() {
+        serverUrl = null;
+        localStorage.removeItem('spotify_server_url');
         if (refreshTimer) {
             clearInterval(refreshTimer);
         }
-        loginScreen.style.display = 'flex';
+        connectionScreen.style.display = 'flex';
         playerScreen.style.display = 'none';
-        window.location.hash = '';
     }
 
     function initPlayer() {
-        loginScreen.style.display = 'none';
+        connectionScreen.style.display = 'none';
         playerScreen.style.display = 'flex';
 
         // Initial fetch
         getCurrentPlayback();
 
-        // Poll every 2 seconds
+        // Poll every 1 second for smooth updates
         refreshTimer = setInterval(function() {
             getCurrentPlayback();
-        }, 2000);
+        }, 1000);
     }
 
     // Event Listeners
-    loginBtn.addEventListener('click', login);
+    connectBtn.addEventListener('click', connect);
     playPauseBtn.addEventListener('click', playPause);
     nextBtn.addEventListener('click', skipToNext);
     prevBtn.addEventListener('click', skipToPrevious);
 
+    // Enter key on input
+    serverUrlInput.addEventListener('keypress', function(e) {
+        if (e.keyCode === 13 || e.which === 13) {
+            connect();
+        }
+    });
+
     // Initialization
     function init() {
-        // Check for access token in URL hash
-        var params = getHashParams();
-        if (params.access_token) {
-            accessToken = params.access_token;
-            localStorage.setItem('spotify_access_token', accessToken);
-            window.location.hash = '';
-            initPlayer();
-            return;
-        }
+        // Check for stored server URL
+        var storedUrl = localStorage.getItem('spotify_server_url');
+        if (storedUrl) {
+            serverUrlInput.value = storedUrl;
 
-        // Check for stored access token
-        var storedToken = localStorage.getItem('spotify_access_token');
-        if (storedToken) {
-            accessToken = storedToken;
-            initPlayer();
-            return;
+            // Try to auto-connect
+            testConnection(storedUrl, function(success) {
+                if (success) {
+                    serverUrl = storedUrl;
+                    initPlayer();
+                } else {
+                    // Server not available, show connection screen
+                    connectionScreen.style.display = 'flex';
+                    playerScreen.style.display = 'none';
+                    showStatus('Server not available. Please reconnect.', 5000);
+                }
+            });
+        } else {
+            // Show connection screen
+            connectionScreen.style.display = 'flex';
+            playerScreen.style.display = 'none';
         }
-
-        // Show login screen
-        loginScreen.style.display = 'flex';
-        playerScreen.style.display = 'none';
     }
+
+    // Handle visibility change to pause/resume updates
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
+        } else {
+            if (serverUrl && playerScreen.style.display !== 'none') {
+                getCurrentPlayback();
+                refreshTimer = setInterval(function() {
+                    getCurrentPlayback();
+                }, 1000);
+            }
+        }
+    });
 
     // Start the app
     init();
