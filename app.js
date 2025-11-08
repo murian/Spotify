@@ -31,6 +31,7 @@
     var prevBtn = document.getElementById('prev-btn');
     var nextBtn = document.getElementById('next-btn');
     var statusMessage = document.getElementById('status-message');
+    var newsTickerText = document.getElementById('news-ticker-text');
 
     // Utility Functions
     function formatTime(ms) {
@@ -176,6 +177,21 @@
         showStatus('Previous track');
     }
 
+    // News Ticker
+    function fetchNews() {
+        if (!serverUrl) return;
+
+        makeRequest('GET', '/api/news', null, function(response) {
+            if (response && response.news && response.news.length > 0) {
+                // Create scrolling text with bullet separators
+                var newsText = response.news.join(' • ') + ' • ';
+                newsTickerText.textContent = newsText;
+            }
+        }, function(error) {
+            console.error('Error fetching news:', error);
+        });
+    }
+
     // Connection
     function testConnection(url, callback) {
         var xhr = new XMLHttpRequest();
@@ -248,11 +264,17 @@
 
         // Initial fetch
         getCurrentPlayback();
+        fetchNews();
 
         // Poll every 1 second for smooth updates
         refreshTimer = setInterval(function() {
             getCurrentPlayback();
         }, 1000);
+
+        // Update news every 5 minutes
+        setInterval(function() {
+            fetchNews();
+        }, 5 * 60 * 1000);
     }
 
     // Event Listeners

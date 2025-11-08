@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = 3001;
@@ -125,6 +126,39 @@ async function controlPlayback(action) {
     }
 }
 
+/**
+ * Fetch news from NOS.nl RSS feed
+ */
+async function fetchNOSNews() {
+    try {
+        const response = await fetch('https://feeds.nos.nl/nosnieuwsalgemeen');
+        const xmlText = await response.text();
+
+        // Simple XML parsing for RSS items
+        const items = [];
+        const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<\/item>/g;
+        let match;
+
+        while ((match = itemRegex.exec(xmlText)) !== null) {
+            // Decode HTML entities
+            let title = match[1]
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&')
+                .replace(/&quot;/g, '"')
+                .replace(/&apos;/g, "'")
+                .replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1');
+
+            items.push(title);
+        }
+
+        return items.slice(0, 15); // Return top 15 headlines
+    } catch (error) {
+        console.error('Error fetching NOS news:', error);
+        return ['NOS nieuws tijdelijk niet beschikbaar'];
+    }
+}
+
 // API Routes
 
 /**
@@ -156,6 +190,15 @@ app.get('/api/info', (req, res) => {
         version: '1.0.0',
         platform: process.platform
     });
+});
+
+/**
+ * GET /api/news
+ * Returns latest news from NOS.nl
+ */
+app.get('/api/news', async (req, res) => {
+    const news = await fetchNOSNews();
+    res.json({ news });
 });
 
 // Start server
