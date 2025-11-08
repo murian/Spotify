@@ -48,8 +48,12 @@ async function getPlaybackState() {
                     set playerState to player state as string
                     set trackDuration to duration of current track
                     set playerPosition to player position
+                    set trackID to id of current track
+                    set trackPopularity to popularity of current track
+                    set shuffleState to shuffling
+                    set repeatState to repeating
 
-                    return trackName & "|" & artistName & "|" & albumName & "|" & albumArt & "|" & playerState & "|" & trackDuration & "|" & playerPosition
+                    return trackName & "|" & artistName & "|" & albumName & "|" & albumArt & "|" & playerState & "|" & trackDuration & "|" & playerPosition & "|" & trackID & "|" & trackPopularity & "|" & shuffleState & "|" & repeatState
                 else
                     return "not_running"
                 end if
@@ -62,7 +66,7 @@ async function getPlaybackState() {
             return { running: false };
         }
 
-        const [trackName, artistName, albumName, albumArt, playerState, duration, position] = result.split('|');
+        const [trackName, artistName, albumName, albumArt, playerState, duration, position, trackID, popularity, shuffling, repeating] = result.split('|');
 
         return {
             running: true,
@@ -72,9 +76,13 @@ async function getPlaybackState() {
                 album: albumName,
                 albumArt: albumArt,
                 duration: parseInt(duration),
-                position: parseFloat(position)
+                position: parseFloat(position) * 1000,  // Convert seconds to milliseconds
+                id: trackID,
+                popularity: parseInt(popularity)
             },
-            isPlaying: playerState === 'playing'
+            isPlaying: playerState === 'playing',
+            shuffling: shuffling === 'true',
+            repeating: repeating === 'true'
         };
     } catch (error) {
         console.error('Error getting playback state:', error);
