@@ -131,8 +131,16 @@ async function controlPlayback(action) {
  */
 async function fetchNOSNews() {
     try {
+        console.log('Fetching NOS news...');
         const response = await fetch('https://feeds.nos.nl/nosnieuwsalgemeen');
+
+        if (!response.ok) {
+            console.error('NOS feed returned status:', response.status);
+            return ['NOS nieuws tijdelijk niet beschikbaar'];
+        }
+
         const xmlText = await response.text();
+        console.log('Received XML feed, length:', xmlText.length);
 
         // Simple XML parsing for RSS items
         const items = [];
@@ -152,9 +160,10 @@ async function fetchNOSNews() {
             items.push(title);
         }
 
+        console.log('Parsed', items.length, 'news items');
         return items.slice(0, 15); // Return top 15 headlines
     } catch (error) {
-        console.error('Error fetching NOS news:', error);
+        console.error('Error fetching NOS news:', error.message);
         return ['NOS nieuws tijdelijk niet beschikbaar'];
     }
 }

@@ -370,13 +370,25 @@ body {
     font-size: 16px;
     color: white;
     animation: scroll-left 120s linear infinite;
+    -webkit-animation: scroll-left 120s linear infinite;
 }
 
 @keyframes scroll-left {
     0% {
         transform: translateX(0);
+        -webkit-transform: translateX(0);
     }
     100% {
         transform: translateX(-100%);
+        -webkit-transform: translateX(-100%);
+    }
+}
+
+@-webkit-keyframes scroll-left {
+    0% {
+        -webkit-transform: translateX(0);
+    }
+    100% {
+        -webkit-transform: translateX(-100%);
     }
 }

@@ -184,11 +184,16 @@
         makeRequest('GET', '/api/news', null, function(response) {
             if (response && response.news && response.news.length > 0) {
                 // Create scrolling text with bullet separators
+                // Repeat the text 3 times for continuous scrolling
                 var newsText = response.news.join(' • ') + ' • ';
-                newsTickerText.textContent = newsText;
+                newsTickerText.textContent = newsText + newsText + newsText;
+                console.log('News loaded:', response.news.length, 'headlines');
+            } else {
+                console.log('No news received');
             }
         }, function(error) {
             console.error('Error fetching news:', error);
+            newsTickerText.textContent = 'Nieuws kan niet worden geladen • ';
         });
     }
 
@@ -304,6 +309,8 @@
                 if (success) {
                     serverUrl = currentUrl;
                     localStorage.setItem('spotify_server_url', serverUrl);
+                    // Load news immediately even before player init
+                    fetchNews();
                     initPlayer();
                 } else {
                     // Try stored URL as fallback
